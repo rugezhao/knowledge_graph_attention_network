@@ -243,7 +243,7 @@ if __name__ == '__main__':
                             feed_dict={})
 
             # the first n_items of the entity_embeddings correspond to items
-            import pdb; pdb.set_trace()
+            
             
             item_embedding = entity_embedding[:int(data_generator.n_items),:]
             

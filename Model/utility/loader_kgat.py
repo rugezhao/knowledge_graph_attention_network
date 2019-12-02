@@ -10,6 +10,8 @@ from time import time
 import scipy.sparse as sp
 import random as rd
 import collections
+from sklearn.cluster import KMeans
+
 
 class KGAT_loader(Data):
     def __init__(self, args, path):
@@ -105,10 +107,11 @@ class KGAT_loader(Data):
                 user_dict[u_id] = pos_ids
         return np.array(inter_mat), user_dict
 
-    def ng_cluster(user_embedding, item_embedding, n_clusters=13):
+    def ng_cluster(self, user_embedding, item_embedding, n_clusters=13):
         """
         add more interactions for all items in the same cluster as the current user
         """
+        
         ui_embeddings = np.concatenate((user_embedding, item_embedding), axis = 0)
 
         n_user = user_embedding.shape[0]
@@ -125,7 +128,7 @@ class KGAT_loader(Data):
 
         # re-calculate train_data
 
-        self.train_data, self.train_user_dict = load_and_modify_ratings_cluster(kmeans, tracker)
+        self.train_data, self.train_user_dict = self.load_and_modify_ratings_cluster(kmeans, tracker)
 
         # re-generate the sparse adjacency matrices for user-item interaction & relational kg data.
         self.adj_list, self.adj_r_list = self._get_relational_adj_list()

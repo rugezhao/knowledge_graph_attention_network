@@ -83,10 +83,6 @@ class KGAT(object):
         # settings for KG part.
         self.kge_dim = args.kge_size
         self.batch_size_kg = args.batch_size_kg
-        import pdb
-        pdb.set_trace()
-        print(f"layer size is {args.layer_size}")
-
 
         self.weight_size = eval(args.layer_size)
         self.n_layers = len(self.weight_size)
