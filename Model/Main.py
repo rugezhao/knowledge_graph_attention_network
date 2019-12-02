@@ -239,7 +239,7 @@ if __name__ == '__main__':
         # retrieve latest embeddings 
 
             user_embedding, item_embedding = sess.run(
-                            [model.weights['user_embedding'], model.weights['item_embedding']],
+                            [model.weights['user_embed'], model.weights['item_embed']],
                             feed_dict={})
             
             print("modifying adj mat")
