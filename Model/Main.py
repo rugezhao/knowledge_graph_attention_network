@@ -232,9 +232,9 @@ if __name__ == '__main__':
 
 
         """
-        clustering started after epoch 1 for every epoch
+        clustering started after epoch 1 for every 10 epochs
         """
-        if args.use_cluster == 1 and epoch >= 1:
+        if args.use_cluster == 1 and epoch % 10 == 1:
             
         # retrieve latest embeddings 
 
@@ -243,7 +243,7 @@ if __name__ == '__main__':
                             feed_dict={})
 
             # the first n_items of the entity_embeddings correspond to items
-            
+
             
             item_embedding = entity_embedding[:int(data_generator.n_items),:]
             
