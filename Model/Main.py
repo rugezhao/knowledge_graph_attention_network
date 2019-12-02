@@ -238,9 +238,13 @@ if __name__ == '__main__':
             
         # retrieve latest embeddings 
 
-            user_embedding, item_embedding = sess.run(
-                            [model.weights['user_embed'], model.weights['item_embed']],
+            user_embedding, entity_embedding = sess.run(
+                            [model.weights['user_embed'], model.weights['entity_embed']],
                             feed_dict={})
+
+            # the first n_items of the entity_embeddings correspond to items
+            
+            item_embedding = entity_embedding[:int(config['n_items']),:]
             
             print("modifying adj mat")
             data_generator.ng_cluster(user_embedding, item_embedding, n_clusters = 13)
