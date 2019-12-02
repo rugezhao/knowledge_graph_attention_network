@@ -234,18 +234,16 @@ if __name__ == '__main__':
         """
         clustering started after epoch 1 for every epoch
         """
-
+        if args.use_cluster == 1 and epoch >= 1:
+            
         # retrieve latest embeddings 
 
-        user_embedding, item_embedding = sess.run(
-                        [model.weights['user_embedding'], model.weights['item_embedding']],
-                        feed_dict={})
-
-        if args.use_cluster == 1:
-            # only start clustering after 1 epoch
-            if epoch >= 1:
-                print("modifying adj mat")
-                data_generator.ng_cluster(user_embedding, item_embedding, n_clusters = 13)
+            user_embedding, item_embedding = sess.run(
+                            [model.weights['user_embedding'], model.weights['item_embedding']],
+                            feed_dict={})
+            
+            print("modifying adj mat")
+            data_generator.ng_cluster(user_embedding, item_embedding, n_clusters = 13)
 
 
 
