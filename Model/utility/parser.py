@@ -4,10 +4,85 @@ Tensorflow Implementation of Knowledge Graph Attention Network (KGAT) model in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
+import sys
+
 import argparse
+import copy
+
+import datetime
+from pytz import timezone
+import getpass
+
+import pprint as pp
+import pathlib
+from pathlib import Path
+
+from utility.gc_storage import GCStorage
+from utility.logger import Logger
+from utility.constants import *
+
+
+def get_experiment_number(experiments_dir, experiment_name):
+    """Parse directory to count the previous copies of an experiment."""
+    dir_structure = GCStorage.MONO.list_files(experiments_dir)
+    dirnames = [exp_dir.split('/')[-1] for exp_dir in dir_structure[1]]
+
+    ret = 1
+    for d in dirnames:
+        if d[:d.rfind('_')] == experiment_name:
+            ret = max(ret, int(d[d.rfind('_') + 1:]) + 1)
+    return ret
+
+def namespace_to_dict(args):
+    """Turn a nested Namespace object into a nested dictionary."""
+    args_dict = vars(copy.deepcopy(args))
+
+    for arg in args_dict:
+        obj = args_dict[arg]
+        if isinstance(obj, argparse.Namespace):
+            item = namespace_to_dict(obj)
+            args_dict[arg] = item
+        else:
+            if isinstance(obj, pathlib.PosixPath):
+                args_dict[arg] = str(obj)
+
+    return args_dict
+
+def wrap_up(args):
+    
+    cloudFS = GCStorage.get_CloudFS(PROJECT_ID, GC_BUCKET, CREDENTIAL_PATH)
+
+    us_timezone = timezone('US/Pacific')
+    date = datetime.datetime.now(us_timezone).strftime("%Y-%m-%d")
+    save_dir = Path(EXP_STORAGE) / date
+
+    args.exp_name = getpass.getuser() + '_KGAT_' + args.exp_name + '_' + args.dataset
+    exp_num = get_experiment_number(save_dir, args.exp_name)
+
+    args.exp_name = args.exp_name + '_' + str(exp_num)
+    save_dir = save_dir / args.exp_name
+    log_file = save_dir / 'run_log.txt'
+
+    arg_dict = namespace_to_dict(args)
+    arg_dict_text = pp.pformat(arg_dict, indent=4)
+
+    arg_text = ' '.join(sys.argv)
+
+    args.logger = Logger(log_file, save_dir)
+
+    args.logger.log_text({'setup:command_line': arg_text,
+                          'setup:parsed_arguments': arg_dict_text},
+                         0, False)
+
+    return args
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run KGAT.")
+
+    parser.add_argument('--exp_name', default='KGAT',
+                        help='experiment_name')
+
     parser.add_argument('--weights_path', nargs='?', default='',
                         help='Store model path.')
     parser.add_argument('--data_path', nargs='?', default='../Data/',
@@ -75,4 +150,8 @@ def parse_args():
     parser.add_argument('--use_kge', type=bool, default=True,
                         help='whether using knowledge graph embedding')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    args = wrap_up(args)
+
+    return args

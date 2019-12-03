@@ -20,6 +20,7 @@ import os
 import sys
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
+
 def load_pretrained_data(args):
     pre_model = 'mf'
     if args.pretrain == -2:
@@ -211,7 +212,8 @@ if __name__ == '__main__':
                           '\t'.join(['%.5f' % r for r in ret['precision']]),
                           '\t'.join(['%.5f' % r for r in ret['hit_ratio']]),
                           '\t'.join(['%.5f' % r for r in ret['ndcg']]))
-            print(final_perf)
+            # print(final_perf)
+            args.logger.log_text({'final:performance': final_perf}, 0, True)
 
             f.write('\t%s\n\t%s\n' % (split_state[i], final_perf))
         f.close()
@@ -225,6 +227,7 @@ if __name__ == '__main__':
     stopping_step = 0
     should_stop = False
 
+    total_step = 0
     for epoch in range(args.epoch):
         t1 = time()
         loss, base_loss, kge_loss, reg_loss = 0., 0., 0., 0.
@@ -247,6 +250,16 @@ if __name__ == '__main__':
             base_loss += batch_base_loss
             kge_loss += batch_kge_loss
             reg_loss += batch_reg_loss
+
+            # import pdb; pdb.set_trace()
+
+            total_step += 1
+            args.logger.log_scalars({'phase_1:train_time': time() - btime,
+                                    'phase_1:total_loss': float(batch_loss),
+                                    'phase_1:base_loss': float(batch_base_loss),
+                                    'phase_1:kge_loss': float(batch_kge_loss),
+                                    'phase_1:reg_loss': float(batch_reg_loss)
+                                    }, total_step, total_step % 50 == 0)
 
         if np.isnan(loss) == True:
             print('ERROR: loss@phase1 is nan.')
@@ -275,6 +288,12 @@ if __name__ == '__main__':
                     kge_loss += batch_kge_loss
                     reg_loss += batch_reg_loss
 
+                    args.logger.log_scalars({'phase_2:train_time': time() - btime,
+                                            'phase_2:total_loss': float(batch_loss),
+                                            'phase_2:kge_loss': float(batch_kge_loss),
+                                            'phase_2:reg_loss': float(batch_reg_loss)
+                                            }, total_step, total_step % 50 == 0)
+
             if args.use_att is True:
                 # updating attentive laplacian matrix.
                 model.update_attentive_A(sess)
@@ -283,12 +302,20 @@ if __name__ == '__main__':
             print('ERROR: loss@phase2 is nan.')
             sys.exit()
 
-        show_step = 10
+        # show_step = 10
+        show_step = 1
         if (epoch + 1) % show_step != 0:
             if args.verbose > 0 and epoch % args.verbose == 0:
                 perf_str = 'Epoch %d [%.1fs]: train==[%.5f=%.5f + %.5f + %.5f]' % (
                     epoch, time() - t1, loss, base_loss, kge_loss, reg_loss)
-                print(perf_str)
+                # print(perf_str)
+                args.logger.log_text({'train:performance': perf_str}, epoch, True)
+                args.logger.log_scalars({'train:train_time': time()  - t1,
+                                        'train:total_loss': float(loss),
+                                        'train:base_loss': float(base_loss),
+                                        'train:kge_loss': float(kge_loss),
+                                        'train:reg_loss': float(reg_loss)
+                                        }, epoch, True)
             continue
 
         """
@@ -318,7 +345,23 @@ if __name__ == '__main__':
                        (epoch, t2 - t1, t3 - t2, loss, base_loss, kge_loss, reg_loss, ret['recall'][0], ret['recall'][-1],
                         ret['precision'][0], ret['precision'][-1], ret['hit_ratio'][0], ret['hit_ratio'][-1],
                         ret['ndcg'][0], ret['ndcg'][-1])
-            print(perf_str)
+            # print(perf_str)
+            args.logger.log_text({'test:performance': perf_str}, epoch, True)
+            args.logger.log_scalars({'test:train_time': t2 - t1,
+                                    'test:test_time': t3 - t2,
+                                    'test:total_loss': loss,
+                                    'test:base_loss': float(base_loss),
+                                    'test:kge_loss': float(kge_loss),
+                                    'test:reg_loss': float(reg_loss),
+                                    'test:recall_20': float(ret['recall'][0]),
+                                    'test:recall_100': float(ret['recall'][1]),
+                                    'test:precision_20': float(ret['precision'][0]),
+                                    'test:precision_100': float(ret['precision'][1]),
+                                    'test:hit_20': float(ret['hit'][0]),
+                                    'test:hit_100':float(ret['hit'][1]),
+                                    'test:ndcg_20': float(ret['ndcg'][0]),
+                                    'test:ndcg_100': float(ret['ndcg'][1]),
+                                    }, epoch, True)
 
         cur_best_pre_0, stopping_step, should_stop = early_stopping(ret['recall'][0], cur_best_pre_0,
                                                                     stopping_step, expected_order='acc', flag_step=10)
@@ -347,7 +390,8 @@ if __name__ == '__main__':
                   '\t'.join(['%.5f' % r for r in pres[idx]]),
                   '\t'.join(['%.5f' % r for r in hit[idx]]),
                   '\t'.join(['%.5f' % r for r in ndcgs[idx]]))
-    print(final_perf)
+    # print(final_perf)
+    args.logger.log_text({'test:performance': perf_str}, epoch, True)
 
     save_path = '%soutput/%s/%s.result' % (args.proj_path, args.dataset, model.model_type)
     ensureDir(save_path)

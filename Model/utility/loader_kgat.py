@@ -26,11 +26,18 @@ class KGAT_loader(Data):
 
         self.all_h_list, self.all_r_list, self.all_t_list, self.all_v_list = self._get_all_kg_data()
 
-
     def _get_relational_adj_list(self):
         t1 = time()
         adj_mat_list = []
         adj_r_list = []
+
+        def add_skip_con(mat):
+            mat = mat.tocsr()
+            skip = mat.multiply(mat)
+            skip[mat > 0] = 0
+            skip = skip + mat
+
+            return skip.tocoo()
 
         def _np_mat2sp_adj(np_mat, row_pre, col_pre):
             n_all = self.n_users + self.n_entities
@@ -46,7 +53,11 @@ class KGAT_loader(Data):
             a_adj = sp.coo_matrix((a_vals, (a_rows, a_cols)), shape=(n_all, n_all))
             b_adj = sp.coo_matrix((b_vals, (b_rows, b_cols)), shape=(n_all, n_all))
 
-            return a_adj, b_adj
+            a_skip = add_skip_con(a_adj)
+            b_skip = add_skip_con(b_adj)
+
+            return a_skip, b_skip
+            # return a_adj, b_adj
 
         R, R_inv = _np_mat2sp_adj(self.train_data, row_pre=0, col_pre=self.n_users)
         adj_mat_list.append(R)
@@ -56,6 +67,7 @@ class KGAT_loader(Data):
         adj_r_list.append(self.n_relations + 1)
         print('\tconvert ratings into adj mat done.')
 
+        # For each relation, add skip connection
         for r_id in self.relation_dict.keys():
             K, K_inv = _np_mat2sp_adj(np.array(self.relation_dict[r_id]), row_pre=self.n_users, col_pre=self.n_users)
             adj_mat_list.append(K)
