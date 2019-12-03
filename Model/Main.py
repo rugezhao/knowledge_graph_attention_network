@@ -277,16 +277,17 @@ if __name__ == '__main__':
             # import pdb; pdb.set_trace()
 
             total_step_1 += 1
-            args.logger.log_scalars({'phase_1:train_time': time() - btime,
-                                    'phase_1:total_loss': float(batch_loss),
-                                    'phase_1:base_loss': float(batch_base_loss),
-                                    'phase_1:kge_loss': float(batch_kge_loss),
-                                    'phase_1:reg_loss': float(batch_reg_loss)
-                                    },
-                                    total_step_1, n_batch,
-                                    total_step_1 % n_batch,
-                                    epoch,
-                                    total_step_1 % 50 == 0 or args.fast_debug)
+            if total_step_1 % 50 == 0 or args.fast_debug:
+                args.logger.log_scalars({'phase_1:train_time': time() - btime,
+                                        'phase_1:total_loss': float(batch_loss),
+                                        'phase_1:base_loss': float(batch_base_loss),
+                                        'phase_1:kge_loss': float(batch_kge_loss),
+                                        'phase_1:reg_loss': float(batch_reg_loss)
+                                        },
+                                        total_step_1, n_batch,
+                                        total_step_1 % n_batch,
+                                        epoch,
+                                        True)
 
             if args.fast_debug and total_step_1 % n_batch == 5:
                 break
@@ -319,15 +320,16 @@ if __name__ == '__main__':
                     reg_loss += batch_reg_loss
 
                     total_step_2 += 1
-                    args.logger.log_scalars({'phase_2:train_time': time() - btime,
-                                            'phase_2:total_loss': float(batch_loss),
-                                            'phase_2:kge_loss': float(batch_kge_loss),
-                                            'phase_2:reg_loss': float(batch_reg_loss)
-                                            },
-                                            total_step_2, n_A_batch,
-                                            total_step_2 % n_A_batch,
-                                            epoch,
-                                            total_step_2 % 50 == 0 or args.fast_debug)
+                    if total_step_2 % 50 == 0 or args.fast_debug:
+                        args.logger.log_scalars({'phase_2:train_time': time() - btime,
+                                                'phase_2:total_loss': float(batch_loss),
+                                                'phase_2:kge_loss': float(batch_kge_loss),
+                                                'phase_2:reg_loss': float(batch_reg_loss)
+                                                },
+                                                total_step_2, n_A_batch,
+                                                total_step_2 % n_A_batch,
+                                                epoch,
+                                                True)
 
                     if args.fast_debug and total_step_2 % n_A_batch == 5:
                         break
@@ -357,7 +359,7 @@ if __name__ == '__main__':
                                         }, total_step_1 + total_step_2, cur_epoch=epoch,
                                         print_to_stdout=True)
         
-        test_step = 10
+        test_step = 2
         if args.fast_debug == False:
             if epoch % test_step != 0:
                 continue
