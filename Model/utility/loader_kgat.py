@@ -58,7 +58,7 @@ class KGAT_loader(Data):
             a_adj = sp.coo_matrix((a_vals, (a_rows, a_cols)), shape=(n_all, n_all))
             b_adj = sp.coo_matrix((b_vals, (b_rows, b_cols)), shape=(n_all, n_all))
 
-            if self.use_skip:
+            if self.args.use_skip:
                 print('Using skip-connection for adj matrix')
 
                 a_skip = add_skip_con(a_adj)
