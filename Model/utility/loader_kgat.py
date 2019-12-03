@@ -53,11 +53,15 @@ class KGAT_loader(Data):
             a_adj = sp.coo_matrix((a_vals, (a_rows, a_cols)), shape=(n_all, n_all))
             b_adj = sp.coo_matrix((b_vals, (b_rows, b_cols)), shape=(n_all, n_all))
 
-            a_skip = add_skip_con(a_adj)
-            b_skip = add_skip_con(b_adj)
+            if self.use_skip:
+                print('Using skip-connection for adj matrix')
 
-            return a_skip, b_skip
-            # return a_adj, b_adj
+                a_skip = add_skip_con(a_adj)
+                b_skip = add_skip_con(b_adj)
+
+                return a_skip, b_skip
+            else:
+                return a_adj, b_adj
 
         R, R_inv = _np_mat2sp_adj(self.train_data, row_pre=0, col_pre=self.n_users)
         adj_mat_list.append(R)

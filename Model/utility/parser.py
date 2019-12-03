@@ -22,6 +22,23 @@ from utility.logger import Logger
 from utility.constants import *
 
 
+def str_to_bool(arg):
+    """Convert an argument string into its boolean value.
+
+    Args:
+        arg (string): String representing a bool.
+
+    Returns:
+        (bool) Boolean value for the string.
+    """
+    if arg.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif arg.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 def get_experiment_number(experiments_dir, experiment_name):
     """Parse directory to count the previous copies of an experiment."""
     dir_structure = GCStorage.MONO.list_files(experiments_dir)
@@ -149,6 +166,11 @@ def parse_args():
                         help='whether using attention mechanism')
     parser.add_argument('--use_kge', type=bool, default=True,
                         help='whether using knowledge graph embedding')
+
+    parser.add_argument('--use_skip', type=str_to_bool, default=False,
+                        help='Whether to hop twice for neighbor definition')
+
+
 
     args = parser.parse_args()
 
