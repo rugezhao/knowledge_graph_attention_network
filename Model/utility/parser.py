@@ -100,6 +100,9 @@ def parse_args():
     parser.add_argument('--exp_name', default='KGAT',
                         help='experiment_name')
 
+    parser.add_argument('--fast_debug', type=str_to_bool, default=False,
+                        help = 'Fast debug mode')
+
     parser.add_argument('--weights_path', nargs='?', default='',
                         help='Store model path.')
     parser.add_argument('--data_path', nargs='?', default='../Data/',
