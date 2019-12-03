@@ -10,6 +10,8 @@ from time import time
 import scipy.sparse as sp
 import random as rd
 import collections
+from sklearn.cluster import KMeans
+
 
 class KGAT_loader(Data):
     def __init__(self, args, path):
@@ -27,6 +29,9 @@ class KGAT_loader(Data):
         self.all_h_list, self.all_r_list, self.all_t_list, self.all_v_list = self._get_all_kg_data()
 
     def _get_relational_adj_list(self):
+        """
+        return user item interaction adjacency matrix and KG relational triplets adjacency matrix
+        """
         t1 = time()
         adj_mat_list = []
         adj_r_list = []
@@ -64,7 +69,7 @@ class KGAT_loader(Data):
         adj_r_list.append(0)
 
         adj_mat_list.append(R_inv)
-        adj_r_list.append(self.n_relations + 1)
+        adj_r_list.append(self.n_relations + 1) # indicates purchase relation
         print('\tconvert ratings into adj mat done.')
 
         # For each relation, add skip connection
@@ -81,6 +86,68 @@ class KGAT_loader(Data):
         # print('\tadj relation list is', adj_r_list)
 
         return adj_mat_list, adj_r_list
+
+    def load_and_modify_ratings_cluster(self, kmeans, tracker):
+         
+        file_name = self.path + '/train.txt'
+        
+
+        kmeans_labels=kmeans.labels_
+        user_dict = dict()
+        inter_mat = list()
+
+        lines = open(file_name, 'r').readlines()
+        for l in lines:
+            tmps = l.strip()
+            inters = [int(i) for i in tmps.split(' ')]
+
+            u_id, pos_ids = inters[0], inters[1:]
+
+            u_cluster = kmeans_labels[u_id]
+
+            # find the other items in the same cluster and append to pos_ids
+            same_cluster = tracker[kmeans_labels==u_cluster,:]
+            add_iids = set(same_cluster[same_cluster[:,1]==1,0])
+
+
+            pos_ids = list(set(pos_ids).union(add_iids))
+
+            for i_id in pos_ids:
+                inter_mat.append([u_id, i_id])
+
+            if len(pos_ids) > 0:
+                user_dict[u_id] = pos_ids
+        return np.array(inter_mat), user_dict
+
+    def ng_cluster(self, user_embedding, item_embedding, n_clusters=13):
+        """
+        add more interactions for all items in the same cluster as the current user
+        """
+        
+        ui_embeddings = np.concatenate((user_embedding, item_embedding), axis = 0)
+
+        n_user = user_embedding.shape[0]
+        n_item = item_embedding.shape[0]
+        uid_tracker = np.arange(n_user)
+        iid_tracker = np.arange(n_item)
+        tracker = np.concatenate((uid_tracker, iid_tracker), axis = 0)
+        is_i = np.zeros((n_user+n_item,))
+        is_i[n_user:] = 1 
+        tracker = np.hstack((tracker.reshape(-1,1),is_i.reshape(-1,1)))
+
+        # k-means
+        kmeans = KMeans(n_clusters, random_state=0).fit(ui_embeddings) #FIXME 13 is for pretrained yelp
+
+        # re-calculate train_data
+
+        self.train_data, self.train_user_dict = self.load_and_modify_ratings_cluster(kmeans, tracker)
+
+        # re-generate the sparse adjacency matrices for user-item interaction & relational kg data.
+        self.adj_list, self.adj_r_list = self._get_relational_adj_list()
+
+        # re-generate the sparse laplacian matrices.
+        self.lap_list = self._get_relational_lap_list()
+     
 
     def _get_relational_lap_list(self):
         def _bi_norm_lap(adj):
