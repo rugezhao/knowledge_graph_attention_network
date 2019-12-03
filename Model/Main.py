@@ -247,9 +247,9 @@ if __name__ == '__main__':
             
             item_embedding = entity_embedding[:int(data_generator.n_items),:]
             
-            print("modifying adj mat")
+            print(f"epoch {epoch}: modifying adj mat - cluster")
             data_generator.ng_cluster(user_embedding, item_embedding, n_clusters = 13)
-
+            print(f"epoch {epoch}: modifying adj mat - cluster - DONE")
 
 
         """
