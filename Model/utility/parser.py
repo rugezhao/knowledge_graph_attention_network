@@ -164,13 +164,15 @@ def parse_args():
 
     parser.add_argument('--use_att', type=bool, default=True,
                         help='whether using attention mechanism')
+
     parser.add_argument('--use_kge', type=bool, default=True,
                         help='whether using knowledge graph embedding')
 
     parser.add_argument('--use_skip', type=str_to_bool, default=False,
                         help='Whether to hop twice for neighbor definition')
 
-
+    parser.add_argument('--use_cluster', type=int, default=0,
+                        help = 'whether using cluster neighbors 1 for True')
 
     args = parser.parse_args()
 

@@ -233,6 +233,28 @@ if __name__ == '__main__':
         loss, base_loss, kge_loss, reg_loss = 0., 0., 0., 0.
         n_batch = data_generator.n_train // args.batch_size + 1
 
+
+        """
+        clustering started after epoch 1 for every 10 epochs
+        """
+        if args.use_cluster == 1 and epoch % 10 == 1:
+            
+        # retrieve latest embeddings 
+
+            user_embedding, entity_embedding = sess.run(
+                            [model.weights['user_embed'], model.weights['entity_embed']],
+                            feed_dict={})
+
+            # the first n_items of the entity_embeddings correspond to items
+
+            
+            item_embedding = entity_embedding[:int(data_generator.n_items),:]
+            
+            print(f"epoch {epoch}: modifying adj mat - cluster")
+            data_generator.ng_cluster(user_embedding, item_embedding, n_clusters = 13)
+            print(f"epoch {epoch}: modifying adj mat - cluster - DONE")
+
+
         """
         *********************************************************
         Alternative Training for KGAT:
@@ -323,6 +345,7 @@ if __name__ == '__main__':
         Test.
         """
         t2 = time()
+
         users_to_test = list(data_generator.test_user_dict.keys())
 
         ret = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
