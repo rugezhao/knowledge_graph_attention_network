@@ -177,6 +177,9 @@ def parse_args():
     parser.add_argument('--use_cluster', type=int, default=0,
                         help = 'whether using cluster neighbors 1 for True')
 
+    parser.add_argument('--n_clusters', type=int, default=25,
+                        help = 'number of clusters for kmeans')
+
     args = parser.parse_args()
 
     args = wrap_up(args)
