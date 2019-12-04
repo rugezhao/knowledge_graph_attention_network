@@ -91,7 +91,7 @@ class KGAT_loader(Data):
 
         return adj_mat_list, adj_r_list
 
-    def load_and_modify_ratings_cluster(self, kmeans, tracker):
+    def load_and_modify_ratings_cluster(self, kmeans, tracker, p_keep = 0.5):
          
         file_name = self.path + '/train.txt'
         
@@ -111,8 +111,13 @@ class KGAT_loader(Data):
 
             # find the other items in the same cluster and append to pos_ids
             same_cluster = tracker[kmeans_labels==u_cluster,:]
-            add_iids = set(same_cluster[same_cluster[:,1]==1,0])
+            add_iids = same_cluster[same_cluster[:,1]==1,0]
+            # keep p_keep of the same cluster as neighbors
+            u = np.random.uniform(size=len(add_iids))
+            keep = u<p_keep
+            add_iids = add_iids[keep]
 
+            add_iids = set(add_iids)
 
             pos_ids = list(set(pos_ids).union(add_iids))
 
