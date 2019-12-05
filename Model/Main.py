@@ -277,6 +277,25 @@ if __name__ == '__main__':
             data_generator.ng_knn(user_embedding, item_embedding, n_neighbor = args.n_neighbor)
             print(f"epoch {epoch}: modifying adj mat - knn - DONE")
 
+        """
+        find k nearest user started after epoch 1 for every 10 epochs
+        """
+        if args.use_near_user == 1 and epoch % 10 == 1:
+        # retrieve latest embeddings 
+
+            user_embedding, entity_embedding = sess.run(
+                            [model.weights['user_embed'], model.weights['entity_embed']],
+                            feed_dict={})
+
+            # the first n_items of the entity_embeddings correspond to items
+
+            
+            item_embedding = entity_embedding[:int(data_generator.n_items),:]
+            
+            print(f"epoch {epoch}: modifying adj mat - near user")
+            data_generator.ng_near_user(user_embedding, item_embedding, n_neighbor = args.n_neighbor)
+            print(f"epoch {epoch}: modifying adj mat - near user")
+
 
         """
 

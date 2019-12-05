@@ -25,6 +25,8 @@ class Data(object):
         self.n_users, self.n_items = 0, 0
 
         self.train_data, self.train_user_dict = self._load_ratings(train_file)
+        self.train_data_orig = self.train_data # back up original adj mat
+        self.train_user_dict_orig = self.train_user_dict # back up original adj mat
         self.test_data, self.test_user_dict = self._load_ratings(test_file)
         self.exist_users = self.train_user_dict.keys()
 

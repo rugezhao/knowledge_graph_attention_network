@@ -189,6 +189,11 @@ def parse_args():
     parser.add_argument('--n_neighbor', type=int, default=25,
                         help = 'number of nearest neighbors to extend edge for')
 
+    parser.add_argument('--use_near_user', type=int, default=0,
+                        help = 'whether k nearest u user actual items')
+
+
+
 
     args = parser.parse_args()
 

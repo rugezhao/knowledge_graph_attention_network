@@ -205,6 +205,53 @@ class KGAT_loader(Data):
 
         # re-generate the sparse laplacian matrices.
         self.lap_list = self._get_relational_lap_list()
+
+    def load_and_modify_ratings_near_user(self, idx_knn):
+        """
+        idx_knn: n_user, n_neighbor. user idx for nearest neighbors to the current row idx
+        """
+
+        inter_mat = list() #list of list [[u_id, i_id]]
+
+        user_dict = self.train_user_dict_orig # dict 'u_id': pos_ids
+
+        # TODO use idx_knn to find add_iids
+        # pool near neighbor's items and add to the current user
+        for u_id in user_dict.keys():
+            pos_ids = set(user_dict[u_id])
+
+            near_u = idx_knn[u_id,:]
+            for nu in near_u:
+                pos_nu = set(user_dict[nu])
+                pos_ids = pos_ids.union(pos_nu)
+            
+            user_dict[u_id] = list(pos_ids)
+
+            for i_id in pos_ids:
+                inter_mat.append([u_id, i_id])
+
+        return np.array(inter_mat), user_dict
+
+
+    def ng_near_user(self, user_embedding, item_embedding, n_neighbor = 25):
+        """
+        find the k nearest item neighbors of each user
+        """
+        # distance mat: dim = n_user, n_item
+        d_mat = euclidean_distances(user_embedding, user_embedding)
+
+        # arg min to find n_neighbor nearest neighbors (among items) for each u
+        idx_near_user = np.argsort(d_mat, axis = 1) # dim = n_user, n_user
+        idx_near_user = idx_near_user[:, 1:n_neighbor] # exclude itself
+
+        # re-calculate train_data
+        self.train_data, self.train_user_dict = self.load_and_modify_ratings_near_user(idx_near_user)
+
+        # re-generate the sparse adjacency matrices for user-item interaction & relational kg data.
+        self.adj_list, self.adj_r_list = self._get_relational_adj_list()
+
+        # re-generate the sparse laplacian matrices.
+        self.lap_list = self._get_relational_lap_list()
      
 
     def _get_relational_lap_list(self):
