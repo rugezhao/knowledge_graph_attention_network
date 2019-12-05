@@ -257,7 +257,29 @@ if __name__ == '__main__':
             print(f"epoch {epoch}: modifying adj mat - cluster - DONE")
 
 
+
         """
+        find k nearest neighbor started after epoch 1 for every 10 epochs
+        """
+        if args.use_knn == 1 and epoch % 10 == 1:
+        # retrieve latest embeddings 
+
+            user_embedding, entity_embedding = sess.run(
+                            [model.weights['user_embed'], model.weights['entity_embed']],
+                            feed_dict={})
+
+            # the first n_items of the entity_embeddings correspond to items
+
+            
+            item_embedding = entity_embedding[:int(data_generator.n_items),:]
+            
+            print(f"epoch {epoch}: modifying adj mat - knn")
+            data_generator.ng_knn(user_embedding, item_embedding, n_neighbor = args.n_neighbor)
+            print(f"epoch {epoch}: modifying adj mat - knn - DONE")
+
+
+        """
+
         *********************************************************
         Alternative Training for KGAT:
         ... phase 1: to train the recommender.
