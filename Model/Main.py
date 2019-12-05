@@ -229,6 +229,7 @@ if __name__ == '__main__':
 
     total_step_1 = 0
     total_step_2 = 0
+    disp_step = 200
     for epoch in range(args.epoch):
         t1 = time()
         loss, base_loss, kge_loss, reg_loss = 0., 0., 0., 0.
@@ -277,7 +278,7 @@ if __name__ == '__main__':
             # import pdb; pdb.set_trace()
 
             total_step_1 += 1
-            if total_step_1 % 50 == 0 or args.fast_debug:
+            if total_step_1 % disp_step == 0 or args.fast_debug:
                 args.logger.log_scalars({'phase_1:train_time': time() - btime,
                                         'phase_1:total_loss': float(batch_loss),
                                         'phase_1:base_loss': float(batch_base_loss),
@@ -320,7 +321,7 @@ if __name__ == '__main__':
                     reg_loss += batch_reg_loss
 
                     total_step_2 += 1
-                    if total_step_2 % 50 == 0 or args.fast_debug:
+                    if total_step_2 % disp_step == 0 or args.fast_debug:
                         args.logger.log_scalars({'phase_2:train_time': time() - btime,
                                                 'phase_2:total_loss': float(batch_loss),
                                                 'phase_2:kge_loss': float(batch_kge_loss),

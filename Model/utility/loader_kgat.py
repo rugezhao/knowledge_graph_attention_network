@@ -36,10 +36,14 @@ class KGAT_loader(Data):
         adj_mat_list = []
         adj_r_list = []
 
-        def add_skip_con(mat):
+        def add_skip_con(mat, mat_inv):
             mat = mat.tocsr()
-            skip = mat.multiply(mat)
-            skip[mat > 0] = 0
+            mat_inv = mat_inv.tocsr()
+
+            undirected = mat + mat_inv
+
+            skip = undirected.multiply(undirected)
+            skip[undirected > 0] = 0
             skip = skip + mat
 
             return skip.tocoo()
@@ -61,8 +65,8 @@ class KGAT_loader(Data):
             if self.args.use_skip:
                 print('Using skip-connection for adj matrix')
 
-                a_skip = add_skip_con(a_adj)
-                b_skip = add_skip_con(b_adj)
+                a_skip = add_skip_con(a_adj, b_adj)
+                b_skip = add_skip_con(b_adj, a_adj)
 
                 return a_skip, b_skip
             else:
