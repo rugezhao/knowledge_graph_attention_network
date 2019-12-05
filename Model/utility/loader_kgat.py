@@ -11,7 +11,7 @@ import scipy.sparse as sp
 import random as rd
 import collections
 from sklearn.cluster import KMeans
-
+from sklearn.metrics.pairwise import euclidean_distances
 
 class KGAT_loader(Data):
     def __init__(self, args, path):
@@ -145,11 +145,56 @@ class KGAT_loader(Data):
         tracker = np.hstack((tracker.reshape(-1,1),is_i.reshape(-1,1)))
 
         # k-means
-        kmeans = KMeans(n_clusters, random_state=0).fit(ui_embeddings) #FIXME 13 is for pretrained yelp
+        kmeans = KMeans(n_clusters, random_state=0).fit(ui_embeddings)  
 
         # re-calculate train_data
-
         self.train_data, self.train_user_dict = self.load_and_modify_ratings_cluster(kmeans, tracker, p_keep)
+
+        # re-generate the sparse adjacency matrices for user-item interaction & relational kg data.
+        self.adj_list, self.adj_r_list = self._get_relational_adj_list()
+
+        # re-generate the sparse laplacian matrices.
+        self.lap_list = self._get_relational_lap_list()
+
+    def load_and_modify_ratings_knn(self, idx_knn):
+         
+        file_name = self.path + '/train.txt'
+        
+        user_dict = dict()
+        inter_mat = list()
+
+        lines = open(file_name, 'r').readlines()
+        for l in lines:
+            tmps = l.strip()
+            inters = [int(i) for i in tmps.split(' ')]
+
+            u_id, pos_ids = inters[0], inters[1:]
+
+            add_iids = idx_knn[u_id,:]
+
+            add_iids = set(add_iids)
+
+            pos_ids = list(set(pos_ids).union(add_iids))
+
+            for i_id in pos_ids:
+                inter_mat.append([u_id, i_id])
+
+            if len(pos_ids) > 0:
+                user_dict[u_id] = pos_ids
+        return np.array(inter_mat), user_dict
+
+    def ng_knn(self, user_embedding, item_embedding, n_neighbor = 25):
+        """
+        find the k nearest item neighbors of each user
+        """
+        # distance mat: dim = n_user, n_item
+        d_mat = euclidean_distances(user_embedding, item_embedding)
+
+        # arg min to find n_neighbor nearest neighbors (among items) for each u
+        idx_nn = np.argsort(d_mat, axis = 1) # dim = n_user, n_item
+        idx_knn = idx_nn[:, :n_neighbor]
+        # re-calculate train_data
+        self.train_data, self.train_user_dict = self.load_and_modify_ratings_knn(idx_knn)
 
         # re-generate the sparse adjacency matrices for user-item interaction & relational kg data.
         self.adj_list, self.adj_r_list = self._get_relational_adj_list()
