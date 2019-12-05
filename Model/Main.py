@@ -252,7 +252,7 @@ if __name__ == '__main__':
             item_embedding = entity_embedding[:int(data_generator.n_items),:]
             
             print(f"epoch {epoch}: modifying adj mat - cluster")
-            data_generator.ng_cluster(user_embedding, item_embedding, n_clusters = args.n_clusters)
+            data_generator.ng_cluster(user_embedding, item_embedding, n_clusters = args.n_clusters, p_keep=args.p_keep_cluster_item)
             print(f"epoch {epoch}: modifying adj mat - cluster - DONE")
 
 
