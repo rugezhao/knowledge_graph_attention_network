@@ -12,6 +12,7 @@ import copy
 import datetime
 from pytz import timezone
 import getpass
+import socket
 
 import pprint as pp
 import pathlib
@@ -73,7 +74,8 @@ def wrap_up(args):
     date = datetime.datetime.now(us_timezone).strftime("%Y-%m-%d")
     save_dir = Path(EXP_STORAGE) / date
 
-    args.exp_name = getpass.getuser() + '_KGAT_' + args.exp_name + '_' + args.dataset
+    args.exp_name = getpass.getuser() + '_' + socket.gethostname() + \
+                    '_KGAT_' + args.exp_name + '_' + args.dataset
     exp_num = get_experiment_number(save_dir, args.exp_name)
 
     args.exp_name = args.exp_name + '_' + str(exp_num)
@@ -156,7 +158,7 @@ def parse_args():
     parser.add_argument('--Ks', nargs='?', default='[20, 40, 60, 80, 100]',
                         help='Output sizes of every layer')
 
-    parser.add_argument('--save_flag', type=int, default=0,
+    parser.add_argument('--save_flag', type=int, default=1,
                         help='0: Disable model saver, 1: Activate model saver')
 
     parser.add_argument('--test_flag', nargs='?', default='part',
